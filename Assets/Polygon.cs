@@ -13,6 +13,10 @@ public class Polygon : MonoBehaviour {
     private List<GameObject> permanentEdges = new List<GameObject>();
 
 	private void Awake () {
+		this.points.Clear();
+		for (int i = 0; i < 10; i++) {
+			this.points.Add(new Vector3(Random.Range(-7.5f, 7.5f), Random.Range(-5f, 5f)));
+		}
 	}
 
 	private void Start ()

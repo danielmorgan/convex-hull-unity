@@ -3,58 +3,57 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class SlowConvexHull {
-    private Polygon P;
+    private Polygon poly;
     private List<Vector3> convexEdges = new List<Vector3>();
 
     public SlowConvexHull (Polygon polygon)
     {
-        this.P = polygon;
+        this.poly = polygon;
     }
 
     public IEnumerator Run ()
     {
-		WaitForSeconds wait = new WaitForSeconds(0.005f);
+		WaitForSeconds wait = new WaitForSeconds(0.05f);
 
-        for (int p = 0; p < this.P.points.Count; p++) {
-            for (int q = 1; q < this.P.points.Count; q++) {
+        for (int p = 0; p < this.poly.points.Count; p++) {
+            for (int q = 0; q < this.poly.points.Count; q++) {
                 if (p == q) {
                     continue;
                 }
-                this.P.ClearEdges();
-                this.P.DrawEdge(this.P.points[p], this.P.points[q], Color.red);
+                Vector3 P = this.poly.points[p];
+                Vector3 Q = this.poly.points[q];
+                this.poly.ClearEdges();
+                this.poly.DrawEdge(P, Q, Color.red);
                 bool valid = true;
                 yield return wait;
 
-                for (int r = 0; r < this.P.points.Count; r++) {
+                for (int r = 0; r < this.poly.points.Count; r++) {
                     if ((r == p || r == q)) {
                         continue;
                     }
-                    if (this.IsLeftOfLine(p, q, r)) {
+                    Vector3 R = this.poly.points[r];
+                    if (this.IsLeftOfLine(P, Q, R)) {
                         valid = false;
                         continue;
                     }
-                    this.P.DrawEdge(this.P.points[p], this.P.points[r], Color.blue);
-                    this.P.DrawEdge(this.P.points[q], this.P.points[r], Color.blue);
-                    yield return wait;
+                    // this.poly.DrawEdge(P, R, Color.blue);
+                    // this.poly.DrawEdge(Q, R, Color.blue);
+                    // yield return wait;
                 }
 
                 if (valid) {
-                    this.P.DrawEdge(this.P.points[p], this.P.points[q], Color.green, Color.green, true);
-                    this.convexEdges.Add(this.P.points[p]);
-                    this.convexEdges.Add(this.P.points[q]);
+                    this.poly.DrawEdge(P, Q, Color.green, Color.green, true);
+                    this.convexEdges.Add(P);
+                    this.convexEdges.Add(Q);
                 }
             }
         }
 
-        this.P.ClearEdges();
+        this.poly.ClearEdges();
     }
 
-	private bool IsLeftOfLine (int p, int q, int r)
+	private bool IsLeftOfLine (Vector3 P, Vector3 Q, Vector3 R)
 	{
-        Vector3 P = this.P.points[p];
-        Vector3 Q = this.P.points[q];
-        Vector3 R = this.P.points[r];
-
         float determinant = (P.x - R.x) * (Q.y - R.y) - (P.y - R.y) * (Q.x - R.x);
 
 		return determinant > 0;
