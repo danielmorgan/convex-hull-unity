@@ -4,37 +4,41 @@ using UnityEngine;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class Polygon : MonoBehaviour {
-	public List<Vector3> vertices = new List<Vector3>();
+	public List<Vector3> points = new List<Vector3>();
 	public GameObject vertex;
 	public GameObject edge;
+
+	private List<GameObject> vertices = new List<GameObject>();
+    private List<GameObject> edges = new List<GameObject>();
+    private List<GameObject> permanentEdges = new List<GameObject>();
 
 	private void Awake () {
 	}
 
-	private void Start () {
-
-
-		for (int i = 0; i < this.vertices.Count; i++) {
-			Vector3 p = this.vertices[i] + this.transform.position;
-			Vector3 pSub1 = this.vertices[Mathf.Max(0, i - 1)] + this.transform.position;
+	private void Start ()
+	{
+		for (int i = 0; i < this.points.Count; i++) {
+			Vector3 p = this.points[i] + this.transform.position;
+			Vector3 pSub1 = this.points[Mathf.Max(0, i - 1)] + this.transform.position;
 
 			this.DrawVertex(p);
-
-			if (i > 0) {
-				this.DrawEdge(pSub1, p);
-			}
 		}
+
+		SlowConvexHull algo = new SlowConvexHull(this);
+		StartCoroutine(algo.Run());
 	}
 
-	private GameObject DrawVertex (Vector3 point)
+	public GameObject DrawVertex (Vector3 point)
 	{
 		GameObject vertex = Instantiate<GameObject>(this.vertex, this.transform);
 		vertex.transform.position = point;
 
+		this.vertices.Add(vertex);
+
 		return vertex;
 	}
 
-	private GameObject DrawEdge (Vector3 start, Vector3 end)
+	public GameObject DrawEdge (Vector3 start, Vector3 end, Color? endColor = null, Color? startColor = null, bool permanent = false)
 	{
 		GameObject edge = Instantiate<GameObject>(this.edge, this.transform);
 		edge.transform.position = this.transform.position;
@@ -43,26 +47,39 @@ public class Polygon : MonoBehaviour {
 		lr.SetPosition(0, start);
 		lr.SetPosition(1, end);
 
+		lr.startColor = startColor ?? Color.white;
+		lr.endColor = endColor ?? Color.red;
+
+		if (permanent) {
+			this.permanentEdges.Add(edge);
+		} else {
+			this.edges.Add(edge);
+		}
+
 		return edge;
 	}
 
-	private void SlowConvexHull () {
-		
+	public void ClearEdges (int offset = 0)
+	{
+		for (int i = 0; i < this.edges.Count - offset; i++) {
+			Destroy(this.edges[i]);
+		}
 	}
 
-	private void OnDrawGizmos () {
-		if (this.vertices == null) {
+	private void OnDrawGizmos ()
+	{
+		if (this.points == null) {
 			return;
 		}
 
-		for (int i = 0; i < this.vertices.Count; i++) {
-			Vector3 p = this.vertices[i];
-			Vector3 pSub1 = this.vertices[Mathf.Max(0, i - 1)];
+		for (int i = 0; i < this.points.Count; i++) {
+			Vector3 p = this.points[i] + this.transform.position;
+			Vector3 pSub1 = this.points[Mathf.Max(0, i - 1)] + this.transform.position;
 
 			Gizmos.color = Color.black;
 			Gizmos.DrawSphere(p, 0.3f);
-			// Gizmos.color = Color.red;
-			// Gizmos.DrawLine(pSub1, p);
+			Gizmos.color = Color.red;
+			Gizmos.DrawLine(pSub1, p);
 		}
 
 	}
