@@ -13,9 +13,11 @@ public class Polygon : MonoBehaviour {
     private List<GameObject> permanentEdges = new List<GameObject>();
 
 	private void Awake () {
-		this.points.Clear();
-		for (int i = 0; i < 10; i++) {
-			this.points.Add(new Vector3(Random.Range(-7.5f, 7.5f), Random.Range(-5f, 5f)));
+		if (this.points.Count < 3) {
+			this.points.Clear();
+			for (int i = 0; i < 10; i++) {
+				this.points.Add(new Vector3(Random.Range(-7.5f, 7.5f), Random.Range(-5f, 5f)));
+			}
 		}
 	}
 
@@ -23,19 +25,18 @@ public class Polygon : MonoBehaviour {
 	{
 		for (int i = 0; i < this.points.Count; i++) {
 			Vector3 p = this.points[i] + this.transform.position;
-			Vector3 pSub1 = this.points[Mathf.Max(0, i - 1)] + this.transform.position;
-
-			this.DrawVertex(p);
+			// this.DrawVertex(p);
 		}
 
-		SlowConvexHull algo = new SlowConvexHull(this);
+		ConvexHull algo = new ConvexHull(this);
 		StartCoroutine(algo.Run());
 	}
 
-	public GameObject DrawVertex (Vector3 point)
+	public GameObject DrawVertex (Vector3 point, Color? color)
 	{
 		GameObject vertex = Instantiate<GameObject>(this.vertex, this.transform);
 		vertex.transform.position = point;
+		vertex.GetComponent<MeshRenderer>().material.color = color ?? Color.red;
 
 		this.vertices.Add(vertex);
 
@@ -61,6 +62,18 @@ public class Polygon : MonoBehaviour {
 		}
 
 		return edge;
+	}
+
+	public void ClearVertex (int index)
+	{
+		Destroy(this.vertices[index]);
+	}
+
+	public void ClearVertices ()
+	{
+		for (int i = 0; i < this.vertices.Count; i++) {
+			Destroy(this.vertices[i]);
+		}
 	}
 
 	public void ClearEdges (int offset = 0)
